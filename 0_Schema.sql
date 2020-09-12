@@ -44,3 +44,5 @@ create index estate_rect on estate (rent);
 create index estate_popularity_desc on estate (popularity desc);
 CREATE INDEX estate_latitude on estate (latitude);
 CREATE INDEX estate_longitude on estate (longitude);
+CREATE INDEX estate_height on estate (door_height);
+CREATE INDEX estate_width on estate (door_width);
