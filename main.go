@@ -448,6 +448,11 @@ func postChair(c echo.Context) error {
 }
 
 func searchChairs(c echo.Context) error {
+
+	dbchar, _ := mySQLConnectionData103.ConnectDB()
+	dbchar.SetMaxOpenConns(10)
+	defer dbchar.Close()
+
 	conditions := make([]string, 0)
 	params := make([]interface{}, 0)
 
@@ -555,25 +560,25 @@ func searchChairs(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	searchQuery := "SELECT * FROM chair WHERE "
-	countQuery := "SELECT COUNT(*) FROM chair WHERE "
+	searchQuery := "SELECT SQL_CALC_FOUND_ROWS * FROM chair WHERE "
 	searchCondition := strings.Join(conditions, " AND ")
 	limitOffset := " ORDER BY popularity DESC LIMIT ? OFFSET ?"
 
 	var res ChairSearchResponse
-	err = db103.Get(&res.Count, countQuery+searchCondition, params...)
-	if err != nil {
-		c.Logger().Errorf("searchChairs DB execution error : %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
 
 	chairs := []Chair{}
 	params = append(params, perPage, page*perPage)
-	err = db103.Select(&chairs, searchQuery+searchCondition+limitOffset, params...)
+	err = dbchar.Select(&chairs, searchQuery+searchCondition+limitOffset, params...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.JSON(http.StatusOK, ChairSearchResponse{Count: 0, Chairs: []Chair{}})
 		}
+		c.Logger().Errorf("searchChairs DB execution error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	err = dbchar.Get(&res.Count, "SELECT FOUND_ROWS()")
+	if err != nil {
 		c.Logger().Errorf("searchChairs DB execution error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -749,6 +754,11 @@ func postEstate(c echo.Context) error {
 }
 
 func searchEstates(c echo.Context) error {
+
+	dbestates, _ := mySQLConnectionData.ConnectDB()
+	dbestates.SetMaxOpenConns(10)
+	defer dbestates.Close()
+
 	conditions := make([]string, 0)
 	params := make([]interface{}, 0)
 
@@ -827,21 +837,15 @@ func searchEstates(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	searchQuery := "SELECT * FROM estate WHERE "
-	countQuery := "SELECT COUNT(*) FROM estate WHERE "
+	searchQuery := "SELECT SQL_CALC_FOUND_ROWS * FROM estate WHERE "
 	searchCondition := strings.Join(conditions, " AND ")
 	limitOffset := " ORDER BY popularity DESC LIMIT ? OFFSET ?"
 
 	var res EstateSearchResponse
-	err = db.Get(&res.Count, countQuery+searchCondition, params...)
-	if err != nil {
-		c.Logger().Errorf("searchEstates DB execution error : %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
 
 	estates := []Estate{}
 	params = append(params, perPage, page*perPage)
-	err = db.Select(&estates, searchQuery+searchCondition+limitOffset, params...)
+	err = dbestates.Select(&estates, searchQuery+searchCondition+limitOffset, params...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.JSON(http.StatusOK, EstateSearchResponse{Count: 0, Estates: []Estate{}})
@@ -851,6 +855,12 @@ func searchEstates(c echo.Context) error {
 	}
 
 	res.Estates = estates
+
+	err = dbestates.Get(&res.Count, "SELECT FOUND_ROWS()")
+	if err != nil {
+		c.Logger().Errorf("searchEstates DB execution error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	return c.JSON(http.StatusOK, res)
 }
