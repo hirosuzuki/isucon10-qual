@@ -6,5 +6,6 @@
 #export ISU_DB_PASSWORD=password
 
 cd /home/isucon/isuumo/webapp/go/
-exec ./isuumo 2>/tmp/isucon-stderr.log >/tmp/isucon-stdout.log
+#exec ./isuumo 2>/tmp/isucon-stderr.log >/tmp/isucon-stdout.log
+exec ./isuumo 2>/dev/null >/dev/null
 
