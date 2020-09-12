@@ -30,6 +30,7 @@ deploy-nginx:
 
 deploy:
 	go build
+	scp 0_Schema.sql ${SERVER_APP}:/home/isucon/isuumo/webapp/mysql/db/0_Schema.sql
 	ssh ${SERVER_APP} sudo systemctl stop isuumo.go
 	scp isuumo ${SERVER_APP}:/home/isucon/isuumo/webapp/go/isuumo
 	scp start.sh ${SERVER_APP}:/home/isucon/start.sh
