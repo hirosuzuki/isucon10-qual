@@ -39,3 +39,4 @@ CREATE TABLE isuumo.chair
 
 use isuumo;
 CREATE INDEX char_price_id ON chair (price, id);
+create index estate_rent_id on estate (rent, id);

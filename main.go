@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -317,6 +318,8 @@ func initialize(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
+
+	//loadLowPricedEstate()
 
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
@@ -670,6 +673,7 @@ func postEstate(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer tx.Rollback()
+	var es = []Estate{}
 	for _, row := range records {
 		rm := RecordMapper{Record: row}
 		id := rm.NextInt()
@@ -693,11 +697,14 @@ func postEstate(c echo.Context) error {
 			c.Logger().Errorf("failed to insert estate: %v", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
+		estate := Estate{int64(id), thumbnail, name, description, latitude, longitude, address, int64(rent), int64(doorHeight), int64(doorWidth), features, int64(popularity)}
+		es = append(es, estate)
 	}
 	if err := tx.Commit(); err != nil {
 		c.Logger().Errorf("failed to commit tx: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	//insertEstate(es)
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -808,6 +815,35 @@ func searchEstates(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+var lowPricedEstate []Estate = []Estate{}
+
+func loadLowPricedEstate() {
+	query := `SELECT * FROM estate ORDER BY rent ASC, id ASC LIMIT ?`
+	db.Select(&lowPricedEstate, query, Limit)
+	fmt.Fprintf(os.Stderr, "loadLowPricedEstate: %v\n", lowPricedEstate)
+}
+
+func insertEstate(es []Estate) {
+	xs := []Estate{}
+	for i := range lowPricedEstate {
+		xs = append(xs, lowPricedEstate[i])
+	}
+	for i := range es {
+		xs = append(xs, es[i])
+	}
+	sort.Slice(xs, func(i, j int) bool {
+		if xs[i].Rent < xs[j].Rent {
+			return true
+		}
+		if xs[i].ID < xs[j].ID {
+			return true
+		}
+		return false
+	})
+	lowPricedEstate = xs[:20]
+	fmt.Fprintf(os.Stderr, "insertEstate: %v\n", lowPricedEstate)
+}
+
 func getLowPricedEstate(c echo.Context) error {
 	estates := make([]Estate, 0, Limit)
 	query := `SELECT * FROM estate ORDER BY rent ASC, id ASC LIMIT ?`
@@ -820,7 +856,7 @@ func getLowPricedEstate(c echo.Context) error {
 		c.Logger().Errorf("getLowPricedEstate DB execution error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-
+	//fmt.Fprintf(os.Stderr, "getLowPricedEstate: %v\n", estates)
 	return c.JSON(http.StatusOK, EstateListResponse{Estates: estates})
 }
 
