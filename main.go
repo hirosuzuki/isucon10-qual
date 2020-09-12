@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	tracer "github.com/hirosuzuki/go-isucon-tracer"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -219,7 +220,7 @@ func getEnv(key, defaultValue string) string {
 //ConnectDB isuumoデータベースに接続する
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
 	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
-	return sqlx.Open("mysql", dsn)
+	return sqlx.Open("mysql:logger", dsn)
 }
 
 func init() {
@@ -285,6 +286,11 @@ func main() {
 }
 
 func initialize(c echo.Context) error {
+
+	if true {
+		tracer.Start()
+	}
+
 	sqlDir := filepath.Join("..", "mysql", "db")
 	paths := []string{
 		filepath.Join(sqlDir, "0_Schema.sql"),
