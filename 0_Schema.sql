@@ -41,4 +41,6 @@ use isuumo;
 CREATE INDEX char_price_id ON chair (price, id);
 create index estate_rent_id on estate (rent, id);
 create index estate_rect on estate (rent);
-create index estate_popularity_desc_id on estate (popularity desc, id);
+create index estate_popularity_desc on estate (popularity desc);
+CREATE INDEX estate_latitude on estate (latitude);
+CREATE INDEX estate_longitude on estate (longitude);
