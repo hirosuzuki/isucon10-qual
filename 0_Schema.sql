@@ -1,5 +1,5 @@
 DROP DATABASE IF EXISTS isuumo;
-CREATE DATABASE isuumo;
+CREATE DATABASE isuumo DEFAULT CHARACTER SET utf8mb4;
 
 DROP TABLE IF EXISTS isuumo.estate;
 DROP TABLE IF EXISTS isuumo.chair;
@@ -36,3 +36,6 @@ CREATE TABLE isuumo.chair
     popularity  INTEGER         NOT NULL,
     stock       INTEGER         NOT NULL
 );
+
+use isuumo;
+CREATE INDEX char_price_id ON chair (price, id);
